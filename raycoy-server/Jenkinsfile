@@ -1,0 +1,47 @@
+pipeline {
+	agent any
+
+	environment {
+		DOCKERHUB_CREDENTIALS=credentials('DockerHub')
+	}
+
+	stages {
+		stage("GitHub Checkout") {
+			steps {
+				git branch: 'main', url: 'https://github.com/omahalfred/Automating-Docker-Image-Push-To-DockerHub-Using-Jenkins-Pipeline-.git'
+			}
+		}
+
+		stage("Docker Build") {
+			steps {
+				sh 'docker image build -t alfredrozay/alfred-image .'
+			}
+		}
+
+		stage("Authenticate to DockerHub") {
+			steps {
+				echo 'Authenticating...'
+				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+				echo 'Login complete...'
+			}
+		}
+
+		stage("Tag Image and Push to DockerHub") {
+			steps {
+				echo 'tagging...'
+				sh "docker tag alfredrozay/alfred-image docker.io/alfredrozay/alfred-new-application:$BUILD_ID"
+				echo 'pushing...'
+				sh "docker.io/alfredrozay/alfred-new-application:$BUILD_ID"
+			}
+		}
+
+		stage("Logout") {
+			steps{
+				sh 'docker logout'
+				echo 'Logout successful!'
+			}
+		}
+
+	}
+
+}
